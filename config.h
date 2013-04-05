@@ -18,8 +18,6 @@ Does absolutely nothing for Unix!
 #define inline __inline
 #endif
 
-#define EINPROGRESS WSAEINPROGRESS
-
 #define snprintf sprintf_s
 #define strcasecmp strcmp
 #define strncasecmp _strnicmp

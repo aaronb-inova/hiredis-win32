@@ -7,7 +7,6 @@
 *Debug/
 *Release/
 *.XML
-*.filters
 *.user
 *.opensdf
 *.sdf
