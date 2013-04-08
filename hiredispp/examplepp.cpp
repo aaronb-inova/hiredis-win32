@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "../hiredispp.h"
+#include "hiredispp.h"
 
 int main(int argc, const char *argv[]) 
 {

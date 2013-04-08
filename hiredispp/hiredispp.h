@@ -15,7 +15,7 @@
 #include <stdexcept>
 #include <stdint.h>
 
-#include "../../hiredis.h"
+#include "../hiredis.h"
 
 namespace hiredispp
 {

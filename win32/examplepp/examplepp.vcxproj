@@ -91,10 +91,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="examplepp.cpp" />
+    <ClCompile Include="..\..\hiredispp\examplepp.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\hiredis.vcxproj">
+    <ProjectReference Include="..\hiredis.vcxproj">
       <Project>{62fe2454-ab35-4a57-9fa3-51892029221e}</Project>
     </ProjectReference>
   </ItemGroup>

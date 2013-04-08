@@ -81,7 +81,7 @@
     <ClCompile Include="..\hiredis.c" />
     <ClCompile Include="..\net.c" />
     <ClCompile Include="..\sds.c" />
-    <ClCompile Include="hiredispp\hiredispp.cpp" />
+    <ClCompile Include="..\hiredispp\hiredispp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\async.h" />
@@ -89,7 +89,7 @@
     <ClInclude Include="..\hiredis.h" />
     <ClInclude Include="..\net.h" />
     <ClInclude Include="..\sds.h" />
-    <ClInclude Include="hiredispp\hiredispp.h" />
+    <ClInclude Include="..\hiredispp\hiredispp.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
