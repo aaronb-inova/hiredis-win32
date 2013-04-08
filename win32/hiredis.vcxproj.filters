@@ -5,9 +5,7 @@
     <ClCompile Include="..\hiredis.c" />
     <ClCompile Include="..\net.c" />
     <ClCompile Include="..\sds.c" />
-    <ClCompile Include="hiredispp\hiredispp.cpp">
-      <Filter>hiredispp</Filter>
-    </ClCompile>
+    <ClCompile Include="..\hiredispp\hiredispp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\async.h" />
@@ -15,9 +13,7 @@
     <ClInclude Include="..\hiredis.h" />
     <ClInclude Include="..\net.h" />
     <ClInclude Include="..\sds.h" />
-    <ClInclude Include="hiredispp\hiredispp.h">
-      <Filter>hiredispp</Filter>
-    </ClInclude>
+    <ClInclude Include="..\hiredispp\hiredispp.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="hiredispp">
