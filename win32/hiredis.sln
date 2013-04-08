@@ -5,6 +5,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hiredis", "hiredis.vcxproj"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example", "example\example.vcxproj", "{9715AC8D-EA96-4943-92D5-858F65D07EDB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "examplepp", "hiredispp\examplepp\examplepp.vcxproj", "{33F9A4E0-6840-48BF-9F4C-38729882CD40}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -19,6 +21,10 @@ Global
 		{9715AC8D-EA96-4943-92D5-858F65D07EDB}.Debug|Win32.Build.0 = Debug|Win32
 		{9715AC8D-EA96-4943-92D5-858F65D07EDB}.Release|Win32.ActiveCfg = Release|Win32
 		{9715AC8D-EA96-4943-92D5-858F65D07EDB}.Release|Win32.Build.0 = Release|Win32
+		{33F9A4E0-6840-48BF-9F4C-38729882CD40}.Debug|Win32.ActiveCfg = Debug|Win32
+		{33F9A4E0-6840-48BF-9F4C-38729882CD40}.Debug|Win32.Build.0 = Debug|Win32
+		{33F9A4E0-6840-48BF-9F4C-38729882CD40}.Release|Win32.ActiveCfg = Release|Win32
+		{33F9A4E0-6840-48BF-9F4C-38729882CD40}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

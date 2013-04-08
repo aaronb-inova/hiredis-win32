@@ -184,8 +184,7 @@ static int redisContextWaitReady(redisContext *c, int fd, const struct timeval *
 
         if (!FD_ISSET(fd, &wfd)) {
             errno = WSAETIMEDOUT;
-            SETERRNO;
-            __redisSetErrorFromErrno(c,REDIS_ERR_IO,NULL);
+            __redisSetErrorFromErrno(c,REDIS_ERR_IO,"timed out");
             close(fd);
             return REDIS_ERR;
         }
@@ -275,81 +274,6 @@ int redisContextSetTimeout(redisContext *c, struct timeval tv) {
 }
 
 int redisContextConnectTcp(redisContext *c, const char *addr, int port, struct timeval *timeout) {
-//    int s;
-//    int blocking = (c->flags & REDIS_BLOCK);
-//    struct sockaddr_in sa;
-//#ifdef HIREDIS_WIN
-//    int ssa = sizeof(sa);
-//    char buf[255];
-//    snprintf(buf, 255, "%s:%d", addr, port);
-//#endif
-//    
-//    if ((s = redisCreateSocket(c,AF_INET)) < 0)
-//        return REDIS_ERR;
-//    if (redisSetBlocking(c,s,0) != REDIS_OK)
-//        return REDIS_ERR;
-//
-//    sa.sin_family = AF_INET;
-//    sa.sin_port = htons(port);
-//#ifdef HIREDIS_WIN
-//    if (WSAStringToAddress(buf, AF_INET, NULL, (LPSOCKADDR)&sa, &ssa) == 0) {
-//#else
-//    if (inet_pton(AF_INET, addr, &sa.sin_addr) == 0) {
-//#endif      
-//        struct hostent *he;
-//
-//        he = gethostbyname(addr);
-//        if (he == NULL) {
-//            char buf[128];
-//            snprintf(buf,sizeof(buf),"Can't resolve: %s", addr);
-//            __redisSetError(c,REDIS_ERR_OTHER,buf);
-//            close(s);
-//            return REDIS_ERR;
-//        }
-//        memcpy(&sa.sin_addr, he->h_addr, sizeof(struct in_addr));
-//    }
-//#ifdef HIREDIS_WIN
-//    else {
-//      int wserr = WSAGetLastError();
-//      switch (wserr) {
-//      case WSAEFAULT:
-//        printf("The specified Address buffer is too small. Pass in a larger buffer.");
-//        break;
-//      case WSAEINVAL:
-//        printf("Unable to translate the string into a sockaddr.");
-//        break;
-//      case WSANOTINITIALISED:
-//        printf("ws2.dll has not been initialized. The application must first call WSAStartup before calling any Windows Sockets functions.");
-//        break;
-//      case WSA_NOT_ENOUGH_MEMORY:
-//        printf("There was insufficient memory to perform the operation.");
-//        break;
-//      default:
-//        break;
-//      }
-//    }
-//#endif
-//      
-//    if (connect(s, (struct sockaddr*)&sa, sizeof(sa)) == -1) {
-//        SETERRNO;
-//        if (errno == EINPROGRESS && !blocking) {
-//            /* This is ok. */
-//        } else {
-//            if (redisContextWaitReady(c,s,timeout) != REDIS_OK)
-//                return REDIS_ERR;
-//        }
-//    }
-//
-//    /* Reset socket to be blocking after connect(2). */
-//    if (blocking && redisSetBlocking(c,s,1) != REDIS_OK)
-//        return REDIS_ERR;
-//
-//    if (redisSetTcpNoDelay(c,s) != REDIS_OK)
-//        return REDIS_ERR;
-//
-//    c->fd = s;
-//    c->flags |= REDIS_CONNECTED;
-//    return REDIS_OK;
     int s, rv;
     char _port[6];  /* strlen("65535"); */
     struct addrinfo hints, *servinfo, *p;
