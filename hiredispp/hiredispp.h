@@ -534,6 +534,9 @@ namespace hiredispp
         // hgetall key
         DEFINE_COMMAND1(hgetall, beginHgetall, "HGETALL", std::basic_string<CharT>, Reply)
 
+        // publish channel message, returns number of clients receiving message
+        DEFINE_COMMAND2(publish, beginPublish, "PUBLISH", std::basic_string<CharT>, std::basic_string<CharT>, int64_t)
+
         // sadd key member
         DEFINE_COMMAND2(sadd, beginSadd, "SADD", std::basic_string<CharT>, std::basic_string<CharT>, int64_t)
 
@@ -635,18 +638,13 @@ namespace hiredispp
             }
         }
 
-        void beginWatch(const std::vector<std::basic_string<CharT> >& keys) const
+        DEFINE_BEGIN_COMMAND1(beginWatch, "WATCH", std::vector<std::basic_string<CharT>>)
+        void watch(const std::vector<std::basic_string<CharT>> &keys) const
         {
-            beginCommand(Command("WATCH") << keys);
+            beginWatch(keys); endCommand();
         }
 
-        void watch(const std::vector<std::basic_string<CharT> >& keys) const
-        {
-            beginWatch(keys);
-            endCommand();
-        }
-
-        void watch(const std::basic_string<CharT>& key) const
+        void watch(const std::basic_string<CharT> &key) const
         {
             std::vector<std::basic_string<CharT> > keys;
             keys.push_back(key);

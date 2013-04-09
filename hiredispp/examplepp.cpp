@@ -8,7 +8,7 @@
 int main(int argc, const char *argv[]) 
 {
     std::string auth;
-    int port = 6397;
+    int port = 6379;
     if(argc > 1)
         auth = argv[1];
     if(argc > 2 )
@@ -37,6 +37,9 @@ int main(int argc, const char *argv[])
         redis.endCommand();
         printf("incr 1: %ld\n", (long)redis.endCommand());
         printf("incr 2: %ld\n", (long)redis.endCommand());
+
+        int64_t clients = redis.publish("fake_channel", "fake_message");
+        printf("published to clients: %d", (int)clients);
     }
     catch(hiredispp::RedisException e)
     {
