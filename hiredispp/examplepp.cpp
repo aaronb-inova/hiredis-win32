@@ -39,7 +39,20 @@ int main(int argc, const char *argv[])
         printf("incr 2: %ld\n", (long)redis.endCommand());
 
         int64_t clients = redis.publish("fake_channel", "fake_message");
-        printf("published to clients: %d", (int)clients);
+        printf("published to clients: %d\n", (int)clients);
+
+        /* Create a list of numbers, from 0 to 9 */
+        redis.del("test_list");
+        for (int j = 0; j < 10; j++) {
+            char buf[64];
+            sprintf(buf, "%d", j);
+            redis.lpush("test_list", buf);
+        }
+
+        hiredispp::Redis::Reply reply = redis.lrange("test_list", 0, -1);
+        for (int j = 0; j < (int)reply.size(); j++) {
+            printf("%u) %s\n", j, ((std::string)reply[j]).c_str());
+        }
     }
     catch(hiredispp::RedisException e)
     {
