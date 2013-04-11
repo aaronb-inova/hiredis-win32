@@ -8,12 +8,12 @@
 #ifndef HIREDISPP_H
 #define HIREDISPP_H
 
-#include <string.h>
 #include <string>
 #include <vector>
 #include <map>
 #include <stdexcept>
-#include <stdint.h>
+#include <sstream>
+#include <stdint.h>  // int64_t
 
 #include "../hiredis.h"
 
@@ -71,55 +71,58 @@ namespace hiredispp
         static const std::basic_string<CharT> InfoCrLf;
     };
 
-    template<class T, typename CharT>
-    class RedisResult : public T
+    template<typename CharT>
+    class RedisValue
     {
-        std::basic_string<CharT> getString() const
-        {
-            std::basic_string<CharT> s;
-            RedisEncoding<CharT>::decode(T::get()->str, T::get()->len, s);
-            return s;
-        }
+        int type;
+        long long number;
+        std::basic_string<CharT> str;
 
     public:
-        RedisResult(redisReply* r) : T(r) { }
+        RedisValue(const redisReply &r) : type (r.type), number(r.integer)
+        { 
+            if( r.str && r.len > 0 )
+            {
+                RedisEncoding<CharT>::decode(r.str, r.len, str);
+            }
+        }
+        virtual ~RedisValue() {}
 
-        bool isError() const { return (T::get()->type == REDIS_REPLY_ERROR); }
+        bool isError() const { return (type == REDIS_REPLY_ERROR); }
 
         void checkError() const
         {
             if (isError())
             {
-                RedisException e(std::string(T::get()->str, T::get()->len));
+                RedisException e(str);
                 throw e;
             }
         }
 
-        bool isNil() const { return (T::get()->type == REDIS_REPLY_NIL); }
+        bool isNil() const { return (type == REDIS_REPLY_NIL); }
+
+        bool isArray() const { return (type == REDIS_REPLY_ARRAY); }
 
         std::basic_string<CharT> getErrorMessage() const
         {
-            if (isError()) 
-            { 
-                return getString(); 
-            }
+            if (isError())  {  return str;  }
             return std::basic_string<CharT>();
         }
 
         std::basic_string<CharT> getStatus() const
         {
             checkError();
-            if (T::get()->type != REDIS_REPLY_STATUS)
+            if (type != REDIS_REPLY_STATUS)
             {
                 throw std::runtime_error("Invalid reply type");
             }
-            return getString();
+            return str;
         }
 
         operator std::basic_string<CharT>() const
         {
             checkError();
-            if (T::get()->type != REDIS_REPLY_STRING && T::get()->type != REDIS_REPLY_NIL)
+            if (type != REDIS_REPLY_STRING && type != REDIS_REPLY_NIL)
             {
                 throw std::runtime_error("Invalid reply type");
             }
@@ -127,17 +130,17 @@ namespace hiredispp
             {
                 return RedisConst<CharT>::Nil;
             }
-            return getString();
+            return str;
         }
 
         operator int64_t() const
         {
             checkError();
-            if (T::get()->type != REDIS_REPLY_INTEGER)
+            if (type != REDIS_REPLY_INTEGER)
             {
                 throw std::runtime_error("Invalid reply type");
             }
-            return T::get()->integer;
+            return number;
         }
 
         // not including these that include optional for now because we don't want the boost dependency
@@ -145,95 +148,61 @@ namespace hiredispp
         //operator boost::optional<int64_t>() const
         //{
         //    checkError();
-
-        //    if (
-        //            T::get()->type != REDIS_REPLY_INTEGER &&
-        //            T::get()->type != REDIS_REPLY_NIL)
+        //    if (type != REDIS_REPLY_INTEGER && type != REDIS_REPLY_NIL)
         //    {
         //        throw std::runtime_error("Invalid reply type");
         //    }
-
         //    if (isNil())
         //    {
         //        return boost::optional<int64_t>();
         //    }
-
-        //    return boost::optional<int64_t>(T::get()->integer);
+        //    return boost::optional<int64_t>(number);
         //}
+    };
+
+    template<typename CharT>
+    class RedisResult : public RedisValue<CharT>
+    {
+        std::vector<RedisValue<CharT>> elements;
+
+    public:
+        RedisResult<CharT>(redisReply &r) : RedisValue<CharT>(r)
+        {
+            if( RedisValue<CharT>::isArray() )
+            {
+                for( int i = 0; i < (int)r.elements; ++i )
+                {
+                    if( NULL != r.element[i] )
+                        elements.push_back(RedisValue<CharT>(*(r.element[i])));
+                }
+            }
+        }
+
+        virtual ~RedisResult() {}
 
         size_t size() const
         {
-            checkError();
-            
-            if (T::get()->type != REDIS_REPLY_ARRAY)
+            RedisValue<CharT>::checkError();
+            if (!RedisValue<CharT>::isArray())
             {
                 throw std::runtime_error("Invalid reply type");
             }
-
-            return T::get()->elements;
+            return elements.size();
         }
 
-        RedisResult<RedisElementBase, CharT> operator[](size_t i) const
+        RedisValue<CharT> operator[](size_t i) const
         {
-            checkError();
-
-            if (T::get()->type != REDIS_REPLY_ARRAY)
+            RedisValue<CharT>::checkError();
+            if (!RedisValue<CharT>::isArray())
             {
                 throw std::runtime_error("Invalid reply type");
             }
-
-            if (i >= T::get()->elements)
+            if (i >= elements.size())
             {
                 throw std::runtime_error("Out of range");
             }
-
-            return RedisResult<RedisElementBase, CharT>(T::get()->element[i]);
+            return elements[i];
         }
-    };
-
-    class RedisReplyBase
-    {
-        redisReply* _r;
-        int* _refs;
-
-        void addRef()   { ++(*_refs); }
-
-        void release()
-        {
-            if (--(*_refs) == 0)
-            {
-                ::freeReplyObject(_r);
-                delete _refs;
-            }
-        }
-
-    public:
-        RedisReplyBase(redisReply* r) 
-            : _r(r), _refs(new int(0)) { addRef(); }
-        RedisReplyBase(const RedisReplyBase& from) 
-            : _r(from._r), _refs(from._refs) { addRef(); }
-
-        RedisReplyBase& operator=(const RedisReplyBase& from)
-        {
-            if (&from==this) {
-                return *this;
-            }
-
-            release();
-            _r = from._r;
-            _refs = from._refs;
-            addRef();
-            return *this;
-        }
-
-        virtual ~RedisReplyBase()
-        {
-            release();
-            _r = 0;
-            _refs = 0;
-        }
-
-        redisReply* get() const { return _r; }
     };
 
     template<typename CharT>
@@ -294,12 +263,13 @@ namespace hiredispp
             return *this;
         }
 
-        //#include <boost/lexical_cast.hpp>
-        //template<class T> RedisCommandBase<CharT>& operator<<(const T& v)
-        //{
-        //    addPart(boost::lexical_cast<std::basic_string<CharT> >(v));
-        //    return *this;
-        //}
+        template<class T> RedisCommandBase<CharT>& operator<<(const T& v)
+        {
+            std::basic_ostringstream<CharT> os;
+            os << v;
+            addPart(os.str());
+            return *this;
+        }
     };
 
     template<typename CharT>
@@ -344,8 +314,7 @@ namespace hiredispp
 
     public:
         typedef RedisCommandBase<CharT> Command;
-        typedef RedisResult<RedisReplyBase, CharT> Reply;
-        typedef RedisResult<RedisElementBase, CharT> Element;
+        typedef RedisResult<CharT> Reply;
 
         RedisBase(const std::string& host, int port = 6379)
             : _context(0), _host(host), _port(port), _timeout(2, 0) { } // 2 sec timeout
@@ -375,7 +344,9 @@ namespace hiredispp
                 _context = 0;
                 throw e;
             }
-            return Reply(r);
+            Reply reply(*r);
+            ::freeReplyObject(r);
+            return reply;
         }
 
         void beginInfo() const
@@ -506,11 +477,19 @@ namespace hiredispp
         DEFINE_COMMAND1(del, beginDel, "DEL", std::vector<std::basic_string<CharT>>, int64_t)
 
         // lpush key value
-        DEFINE_COMMAND2(lpush, beginLpush, "LPUSH", std::basic_string<CharT>, std::basic_string<CharT>, void)
+        DEFINE_BEGIN_COMMAND2(beginLpush, "LPUSH", std::basic_string<CharT>, std::basic_string<CharT>)
+        void lpush(std::basic_string<CharT> key, std::basic_string<CharT> value)
+        {
+            beginLpush(key, value); endCommand();
+        }
         // lpop key
         DEFINE_COMMAND1(lpop, beginLpop, "LPOP", std::basic_string<CharT>, std::basic_string<CharT>)
         // rpush key value
-        DEFINE_COMMAND2(rpush, beginRpush, "RPUSH", std::basic_string<CharT>, std::basic_string<CharT>, void)
+        DEFINE_BEGIN_COMMAND2(beginRpush, "RPUSH", std::basic_string<CharT>, std::basic_string<CharT>)
+        void rpush(std::basic_string<CharT> key, std::basic_string<CharT> value)
+        {
+            beginRpush(key, value); endCommand();
+        }
         // rpop key
         DEFINE_COMMAND1(rpop, beginRpop, "RPOP", std::basic_string<CharT>, std::basic_string<CharT>)
 
