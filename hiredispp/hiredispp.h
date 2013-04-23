@@ -94,8 +94,9 @@ namespace hiredispp
         {
             if (isError())
             {
-                RedisException e(str);
-                throw e;
+                std::ostringstream stringStream;
+                stringStream << "Redis reply Error: " << str;
+                throw RedisException(stringStream.str());
             }
         }
 
@@ -114,7 +115,9 @@ namespace hiredispp
             checkError();
             if (type != REDIS_REPLY_STATUS)
             {
-                throw std::runtime_error("Invalid reply type");
+                std::ostringstream stringStream;
+                stringStream << "Invalid reply type; " << type << " != " << REDIS_REPLY_STATUS << ". str='" << str << "', num=" << number;
+                throw std::runtime_error(stringStream.str());
             }
             return str;
         }
@@ -124,7 +127,9 @@ namespace hiredispp
             checkError();
             if (type != REDIS_REPLY_STRING && type != REDIS_REPLY_NIL)
             {
-                throw std::runtime_error("Invalid reply type");
+                std::ostringstream stringStream;
+                stringStream << "Invalid reply type; " << type << " != " << REDIS_REPLY_STATUS << " or " << REDIS_REPLY_NIL << ". str='" << str << "', num=" << number;
+                throw std::runtime_error(stringStream.str());
             }
             if (isNil())
             {
@@ -138,7 +143,9 @@ namespace hiredispp
             checkError();
             if (type != REDIS_REPLY_INTEGER)
             {
-                throw std::runtime_error("Invalid reply type");
+                std::ostringstream stringStream;
+                stringStream << "Invalid reply type; " << type << " != " << REDIS_REPLY_INTEGER << ". str='" << str << "', num=" << number;
+                throw std::runtime_error(stringStream.str());
             }
             return number;
         }
@@ -185,7 +192,7 @@ namespace hiredispp
             RedisValue<CharT>::checkError();
             if (!RedisValue<CharT>::isArray())
             {
-                throw std::runtime_error("Invalid reply type");
+                throw std::runtime_error("Invalid reply type - result type is not an array.");
             }
             return elements.size();
         }
@@ -195,11 +202,13 @@ namespace hiredispp
             RedisValue<CharT>::checkError();
             if (!RedisValue<CharT>::isArray())
             {
-                throw std::runtime_error("Invalid reply type");
+                throw std::runtime_error("Invalid reply type - result type is not an array.");
             }
             if (i >= elements.size())
             {
-                throw std::runtime_error("Out of range");
+                std::ostringstream stringStream;
+                stringStream << "Out of range - array has size " << elements.size();
+                throw std::runtime_error(stringStream.str());
             }
             return elements[i];
         }
@@ -292,7 +301,9 @@ namespace hiredispp
                 _context = ::redisConnectWithTimeout(_host.c_str(), _port, _timeout);
                 if (_context->err)
                 {
-                    RedisException e(_context->errstr);
+                    std::ostringstream stringStream;
+                    stringStream << "Redis connect error: " << _context->errstr;
+                    RedisException e(stringStream.str());
                     ::redisFree(_context);
                     _context = 0;
                     throw e;
@@ -302,7 +313,7 @@ namespace hiredispp
                     redisReply *reply = (redisReply *)::redisCommand(_context, "AUTH %s", _auth.c_str());
                     if( NULL == reply )
                     {
-                        RedisException e("Authentication failed!");
+                        RedisException e("Redis authentication failed!");
                         ::redisFree(_context);
                         _context = 0;
                         throw e;
@@ -339,7 +350,9 @@ namespace hiredispp
             redisReply* r;
             if (::redisGetReply(_context, reinterpret_cast<void**>(&r)) != REDIS_OK)
             {
-                RedisException e(_context->errstr);
+                std::ostringstream stringStream;
+                stringStream << "Redis command error: " << _context->errstr;
+                RedisException e(stringStream.str());
                 ::redisFree(_context);
                 _context = 0;
                 throw e;
@@ -545,6 +558,16 @@ namespace hiredispp
 
         // scard key
         DEFINE_COMMAND1(scard, beginScard, "SCARD", std::basic_string<CharT>, int64_t)
+
+        void beginShutdown() const
+        {
+            beginCommand(Command("SHUTDOWN"));
+        }
+        std::basic_string<CharT> shutdown() const
+        {
+            beginShutdown();
+            return endCommand();
+        }
 
         // zadd key member
         DEFINE_COMMAND3(zadd, beginZadd, "ZADD", std::basic_string<CharT>, double, std::basic_string<CharT>, int64_t)
